@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerable Application</title>
+</head>
+<body>
+    <h1>Vulnerable JavaScript Application</h1>
+    <script>
+        // Define a custom logging function
+        function customLog(message) {
+            // Simulate native handler call
+            console.log("console://localhost: " + message);
+        }
+
+        // Define and initialize the console object
+        console = {};
+        console.log = customLog;
+        console.debug = customLog;
+        console.info = customLog;
+        console.warn = customLog;
+        console.error = customLog;
+
+        // Initialize mraid object
+        window.mraid_init = function() {
+            console.log("mraid_init");
+
+            var mraid = window.mraid = {};
+
+            mraid.returnResult = function(call) {
+                console.log("mraid.returnResult");
+                return call().toString();
+            };
+
+            mraid.returnInfo = function(call) {
+                console.log("mraid.returnInfo");
+                var info = '';
+                var result = call();
+                for (property in result) {
+                    if (info) {
+                        info += '&';
+                    }
+                    info += encodeURIComponent(property) + '=' + encodeURIComponent(result[property]);
+                }
+                return info;
+            };
+
+            mraid.invokeNativeFromMRaidJS = function(call) {
+                console.log("mraid.invokeNativeFromMRaidJS: Call: " + call);
+                // Simulate invoking native handler
+                console.log("Native Handler Call: " + call);
+            };
+
+            // Define the mraid method that could be vulnerable
+            mraid.open = function(url) {
+                console.log("mraid.open");
+                var jsCommand = "mraid://open?url=" + encodeURIComponent(url);
+                mraid.invokeNativeFromMRaidJS(jsCommand);
+            };
+
+            // Initialize MRAID
+            mraid.invokeNativeFromMRaidJS("mraid://init");
+        };
+
+        // Ensure mraid object is initialized
+        if (!window.mraid) {
+            window.mraid_init();
+        }
+    </script>
+    <!-- Add a script to verify mraid initialization -->
+    <script>
+        // Wait for mraid to be initialized
+        setTimeout(function() {
+            if (window.mraid) {
+                console.log("MRAID object is initialized and available.");
+            } else {
+                console.log("MRAID object is not initialized.");
+            }
+        }, 1000); // Wait 1 second for initialization
+    </script>
+</body>
+</html>
+
