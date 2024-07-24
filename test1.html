@@ -3,41 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vulnerable Application</title>
+    <title>XSS Vulnerability Testing</title>
+    <style>
+        #output {
+            white-space: pre-wrap; /* Preserve whitespace and line breaks */
+        }
+    </style>
 </head>
 <body>
-    <h1>Vulnerable JavaScript Application</h1>
+    <h1>XSS Vulnerability Testing</h1>
+    <!-- Output area for logging messages -->
+    <div id="output"></div>
+    
     <script>
-        // Define a custom logging function
-        function customLog(message) {
-            // Simulate native handler call
-            console.log("console://localhost: " + message);
-        }
+        // Initialize custom console object
+        window.console = {};
+        window.console.log = function(message) {
+            const outputElement = document.getElementById('output');
+            if (outputElement) {
+                outputElement.innerHTML += message + '<br>';
+            } else {
+                throw new Error("Output element not found.");
+            }
+        };
 
-        // Define and initialize the console object
-        console = {};
-        console.log = customLog;
-        console.debug = customLog;
-        console.info = customLog;
-        console.warn = customLog;
-        console.error = customLog;
+        window.console.error = function(message) {
+            const outputElement = document.getElementById('output');
+            if (outputElement) {
+                outputElement.innerHTML += "<span style='color: red;'>ERROR: " + message + "</span><br>";
+            } else {
+                throw new Error("Output element not found.");
+            }
+        };
 
-        // Initialize mraid object
+        // Simulate MRAID object and methods
         window.mraid_init = function() {
-            console.log("mraid_init");
+            console.log("Initializing MRAID object...");
 
             var mraid = window.mraid = {};
 
             mraid.returnResult = function(call) {
-                console.log("mraid.returnResult");
+                console.log("Returning result for call...");
                 return call().toString();
             };
 
             mraid.returnInfo = function(call) {
-                console.log("mraid.returnInfo");
+                console.log("Returning info for call...");
                 var info = '';
                 var result = call();
-                for (property in result) {
+                for (var property in result) {
                     if (info) {
                         info += '&';
                     }
@@ -47,14 +61,14 @@
             };
 
             mraid.invokeNativeFromMRaidJS = function(call) {
-                console.log("mraid.invokeNativeFromMRaidJS: Call: " + call);
+                console.log("Invoke native handler call: " + call);
                 // Simulate invoking native handler
-                console.log("Native Handler Call: " + call);
+                console.log("Native handler called with: " + call);
             };
 
-            // Define the mraid method that could be vulnerable
+            // Define mraid.open method
             mraid.open = function(url) {
-                console.log("mraid.open");
+                console.log("Opening URL with mraid.open: " + url);
                 var jsCommand = "mraid://open?url=" + encodeURIComponent(url);
                 mraid.invokeNativeFromMRaidJS(jsCommand);
             };
@@ -63,22 +77,22 @@
             mraid.invokeNativeFromMRaidJS("mraid://init");
         };
 
-        // Ensure mraid object is initialized
-        if (!window.mraid) {
-            window.mraid_init();
-        }
-    </script>
-    <!-- Add a script to verify mraid initialization -->
-    <script>
-        // Wait for mraid to be initialized
+        // Call mraid_init to initialize MRAID
+        window.mraid_init();
+
+        // Test for XSS vulnerability
         setTimeout(function() {
-            if (window.mraid) {
-                console.log("MRAID object is initialized and available.");
-            } else {
-                console.log("MRAID object is not initialized.");
+            console.log("Testing XSS vulnerability...");
+
+            try {
+                // Directly adding script to the document to test XSS
+                var script = document.createElement('script');
+                script.innerHTML = "alert('XSS Vulnerability Detected!');";
+                document.body.appendChild(script);
+            } catch (e) {
+                console.error("Error occurred while testing XSS: " + e.message);
             }
         }, 1000); // Wait 1 second for initialization
     </script>
 </body>
 </html>
-
